@@ -5,18 +5,20 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-api_key = os.environ.get("API_KEY")
-client_id = os.environ.get("CLIENT_ID")
-# db_host = os.environ.get("DB_HOST")
-db_port = os.environ.get("DB_PORT")
-db_user = os.environ.get("DB_USER")
-db_pass = os.environ.get("DB_PASSWORD")
+api_key = os.getenv("API_KEY")
+client_id = os.getenv("CLIENT_ID")
+# db_host = os.getenv("DB_HOST")
+db_port = os.getenv("DB_PORT")
+db_user = os.getenv("DB_USER")
+db_pass = os.getenv("DB_PASSWORD")
+
+print(api_key, client_id, db_port, db_user, db_pass)
 
 
-def run_scraper():
+def run_scraper(num_posts, sub):
     # Define the subreddit and API endpoint
-    subreddit = "relationship_advice"
-    endpoint = f"https://www.reddit.com/r/{subreddit}/top.json?sort=top&t=all"
+    subreddit = sub
+    endpoint = f"https://www.reddit.com/r/{subreddit}/top.json?sort=top&t=all&limit={num_posts}"
 
     # Set the authentication parameters
     headers = {
@@ -47,19 +49,22 @@ def run_scraper():
 
     # Iterate through the list of posts
     for post in data["data"]["children"]:
-        if saved_entries >= 10:
-            break
+       #if saved_entries >= 20:
+            #break
         # Extract the author, content, and upvotes
         author = post["data"]["author"]
+        print(author)
+        title = post["data"]["title"]
         content = post["data"]["selftext"]
         upvotes = post["data"]["ups"]
 
         # Check if the post already exists in the database
-        cur.execute("SELECT 1 FROM relationship_advice WHERE author = %s and content = %s", (author, content))
+        cur.execute(f"SELECT 1 FROM {subreddit} WHERE author = %s and content = %s", (author, content))
         if cur.fetchone():
             continue
         # Insert the data into the database
-        cur.execute("INSERT INTO relationship_advice (author, content, upvotes) VALUES (%s, %s, %s)", (author, content, upvotes))
+        cur.execute(f"INSERT INTO {subreddit} (author, title, content, upvotes) VALUES (%s, %s, %s)",
+                    (author,title, content, upvotes))
         saved_entries += 1
 
     # Commit the changes to the database
@@ -73,8 +78,26 @@ def run_scraper():
     conn.close()
 
 
+def postgres_test():
+
+    try:
+        conn = psycopg2.connect(
+            host='localhost',
+            port=db_port,
+            user=db_user,
+            password=db_pass,
+            database="Reddit_English")
+        conn.close()
+        print('connected')
+        return True
+    except:
+        print('Connection error')
+        return False
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    run_scraper()
+    postgres_test()
+    run_scraper(200, 'Showerthoughts')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+

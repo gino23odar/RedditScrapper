@@ -63,7 +63,7 @@ def run_scraper(num_posts, sub):
         if cur.fetchone():
             continue
         # Insert the data into the database
-        cur.execute(f"INSERT INTO {subreddit} (author, title, content, upvotes) VALUES (%s, %s, %s)",
+        cur.execute(f"INSERT INTO {subreddit} (author, title, content, upvotes) VALUES (%s, %s, %s, %s)",
                     (author,title, content, upvotes))
         saved_entries += 1
 
@@ -98,6 +98,6 @@ def postgres_test():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     postgres_test()
-    run_scraper(200, 'Showerthoughts')
+    run_scraper(200, 'showerthoughts')
 
 
